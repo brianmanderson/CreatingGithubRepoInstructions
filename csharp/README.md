@@ -12,9 +12,12 @@ The workflow: Browse to a folder → **Scan** → findings appear color-coded
 
 ## For users: getting it
 
-Grab `PhiScanGui.exe` from the department share (or from this repo's Releases
-page once one is published). No installation — it targets .NET Framework 4.8,
-which is already on every Windows 10/11 machine. Double-click and go.
+Download `PhiScanGui.exe` from the repo's
+[Releases page](https://github.com/brianmanderson/CreatingGithubRepoInstructions/releases)
+(or grab it from the department share). No installation — it targets .NET
+Framework 4.8, which is already on every Windows 10/11 machine. Double-click
+and go. Windows SmartScreen may warn on first run because the exe is unsigned;
+"More info → Run anyway" is expected for an internal tool from this repo.
 
 Run it **before** you turn a folder into a git repository. If it finds things,
 prefer moving them out of the folder over ignoring them; the .gitignore button
@@ -30,6 +33,18 @@ dotnet build csharp/PhiScanGui/PhiScanGui.csproj -c Release
 
 Any .NET SDK ≥ 6 on Windows can build it; there are no NuGet dependencies.
 Ship `PhiScanGui.exe` (the `.config` beside it is optional boilerplate).
+
+**Cutting a release:** bump `<Version>` in the csproj, then push a version tag —
+
+```powershell
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+The [release workflow](../.github/workflows/release.yml) builds the exe on a
+GitHub runner and attaches `PhiScanGui.exe` + `PhiScanGui.zip` to the Release
+automatically. Creating a Release in the GitHub UI works too — the workflow
+attaches the binaries to it either way.
 
 ## Changing detection rules
 

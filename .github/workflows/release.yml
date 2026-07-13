@@ -1,0 +1,48 @@
+# Build PhiScanGui and attach the binaries to a GitHub Release.
+#
+# Fires on either path a release can start from:
+#   - pushing a version tag:        git tag v1.2.3 && git push origin v1.2.3
+#     (the workflow creates the Release itself)
+#   - creating a Release in the UI  (the workflow attaches binaries to it)
+# Both can fire for the same tag; `gh release upload --clobber` makes the
+# second run harmlessly overwrite the first run's assets.
+
+name: Release PhiScanGui
+
+on:
+  push:
+    tags: ["v*"]
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # needed to create the release and upload assets
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (Release)
+        run: dotnet build csharp/PhiScanGui/PhiScanGui.csproj -c Release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = "csharp/PhiScanGui/bin/Release/net48"
+          Compress-Archive -Path "$out/PhiScanGui.exe", "$out/PhiScanGui.exe.config" -DestinationPath PhiScanGui.zip
+          Copy-Item "$out/PhiScanGui.exe" .
+
+      - name: Create release (if missing) and upload binaries
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # github.ref_name is the tag name for both trigger types
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title "PHI Scan $tag" --generate-notes
+          }
+          gh release upload $tag PhiScanGui.exe PhiScanGui.zip --clobber
