@@ -28,7 +28,11 @@ then think about ignoring files. By then the data is already in history.
    - [GitHub Desktop](https://desktop.github.com/) — friendliest, no command line.
    - [Git for Windows](https://git-scm.com/download/win) + [GitHub CLI (`gh`)](https://cli.github.com/) —
      if you're comfortable in a terminal. Run `gh auth login` once after installing.
-3. **Python 3.8+** (most of us have it) — needed only to run the PHI scanner.
+3. **The PHI scanner.** Recommended: download `PhiScanGui.exe` (the desktop app)
+   from the
+   [Releases page](https://github.com/brianmanderson/CreatingGithubRepoInstructions/releases)
+   — nothing to install. *Only if you'd rather use the Python script instead:*
+   **Python 3.8+** (most of us have it).
 4. Tell git who you are (command line only; Desktop asks during setup):
    ```bash
    git config --global user.name  "Your Name"
@@ -39,17 +43,17 @@ then think about ignoring files. By then the data is already in history.
 
 ## Step 1 — Scan the folder BEFORE anything else
 
-From this repo, run the scanner against your project folder:
+**Recommended — the desktop app:** open `PhiScanGui.exe`, click **Browse…**,
+pick your project folder, and click **Scan**. (First run: Windows SmartScreen
+may warn because the exe is unsigned — "More info → Run anyway".)
+
+*Prefer the terminal?* The same scanner is a Python script with identical rules:
 
 ```bash
 python tools/phi_scan.py "C:\Users\you\Projects\MyEsapiScript"
 ```
 
-*Not a Python/terminal person?* Use the desktop app instead — grab
-`PhiScanGui.exe` from the share (or build it; see [csharp/](../csharp/README.md)),
-browse to your folder, and click **Scan**. Same rules, same results.
-
-It reports three tiers:
+Either way it reports three tiers:
 
 - **HIGH** — files that are almost certainly PHI carriers (DICOM files, files whose
   headers say `DICM`, spreadsheets with MRN/DOB columns). These should be **moved out
@@ -75,7 +79,9 @@ subfolder and ignore that whole folder.
 
 Copy [templates/medical-project.gitignore](../templates/medical-project.gitignore)
 into your project folder and rename it to `.gitignore` (note the leading dot, no
-extension). Then let the scanner add anything it flagged:
+extension). Then let the scanner add anything it flagged: in the desktop app,
+leave the flagged rows checked and click **Add checked items to .gitignore**
+(it previews the changes first). From the terminal, the equivalent is:
 
 ```bash
 python tools/phi_scan.py "C:\Users\you\Projects\MyEsapiScript" --update-gitignore
@@ -133,8 +139,10 @@ team guide in the UCSD_ProgrammingLead repo).
 
 ## Step 6 — Install the safety nets (recommended)
 
-- **Pre-commit hook** — copies of the scanner run automatically on every commit and
-  block the commit if PHI patterns show up in staged files:
+- **Pre-commit hook** — the scanner runs automatically on every commit and blocks
+  the commit if PHI patterns show up in staged files. This one always uses the
+  Python script (a git hook can't open the desktop app), so it needs Python
+  installed even if you normally scan with the GUI:
   ```bash
   copy templates\pre-commit  MyEsapiScript\.git\hooks\pre-commit
   copy tools\phi_scan.py     MyEsapiScript\tools\phi_scan.py

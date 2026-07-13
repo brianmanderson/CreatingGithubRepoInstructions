@@ -94,28 +94,33 @@ then helps the human reason about MEDIUM/REVIEW findings (by filename and
 metadata first, content only where permitted).
 [prompts/phi-review-prompt.md](../prompts/phi-review-prompt.md) is the standing prompt.
 
-## What we built: layered, Python-first
+## What we built: layered, one shared engine
 
 | Layer | When it runs | What it is |
 |---|---|---|
-| 1. **Local scanner** ([tools/phi_scan.py](../tools/phi_scan.py)) | Before the first commit, on demand | Deterministic, stdlib-only Python; scans, reports, writes .gitignore. **The primary gate.** |
-| 2. **Pre-commit hook** ([templates/pre-commit](../templates/pre-commit)) | Every `git commit`, automatically | Runs layer 1; blocks the commit on findings. Enforcement without memory. |
+| 1. **Local scan — the primary gate.** Recommended: the [desktop app](../csharp/README.md); equivalently the [Python script](../tools/phi_scan.py). | Before the first commit, on demand | Deterministic scan → report → optional .gitignore update. Both run identical rules. **This is where PHI actually gets stopped.** |
+| 2. **Pre-commit hook** ([templates/pre-commit](../templates/pre-commit)) | Every `git commit`, automatically | Runs the Python script; blocks the commit on findings. Enforcement without memory. |
 | 3. **GitHub Action** ([templates/phi-scan-workflow.yml](../templates/phi-scan-workflow.yml)) | Every push / PR, on GitHub | Same scanner as tripwire — catches drift and hook-skippers. With [PR + branch protection](pr-workflow.md), it becomes a real gate on `main`. |
-| 3b. **Desktop GUI** ([csharp/](../csharp/README.md)) | Before the first commit, on demand | Same rules as layer 1 for colleagues who don't use Python or a terminal. |
 | 4. **Claude review** ([prompts/phi-review-prompt.md](../prompts/phi-review-prompt.md)) | On demand, for judgment calls | Human+LLM review of what layers 1–3 flag but can't decide. |
 
-Why Python for the core rather than C# (given the team knows both):
+**For a person scanning a folder, the desktop app is the recommended default** —
+no Python, no terminal, point-and-click, with color-coded findings and a
+preview before it edits your .gitignore. The Python script is the same engine
+for people who prefer the terminal, and it's what the automated layers (hook,
+Action, Claude) invoke, since those can't open a GUI.
 
-1. **One artifact, four contexts.** The identical script runs standalone, in the
+Why a Python core engine underneath, rather than only C#:
+
+1. **One artifact, several contexts.** The identical script runs standalone, in the
    pre-commit hook, in the GitHub Action, and under Claude's supervision. A
-   compiled exe fits only two of those cleanly.
+   compiled exe fits only some of those cleanly.
 2. **Source-visible.** Anyone can open the script and see exactly what patterns it
    checks — auditable compliance beats a black-box binary.
 3. **Stdlib-only, no install step** beyond Python itself, which the team's
    ML/DICOM work already requires. Same convention as the catalog bridge script.
-4. A C# GUI wrapper around the same detection rules remains the natural Phase 2 if
-   uptake among non-programmers stalls — the rules are already isolated at the top
-   of the script for porting.
+4. **The C# GUI is the human-facing front door** onto those same rules (ported
+   from, and kept in lockstep with, the script) — so non-programmers get a
+   double-click tool while automation keeps the one auditable engine.
 
 ## Known limits (say them out loud)
 

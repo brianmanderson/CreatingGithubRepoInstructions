@@ -127,8 +127,9 @@ Before committing, look at what's actually in the project and ask of each file t
 | Did I create it, or did my OS/editor? | Category 5 |
 | None of the above — it's code, docs, or config I wrote | **Commit it.** |
 
-The scanner ([tools/phi_scan.py](../tools/phi_scan.py)) automates the first
-question and can append what it finds:
+The PHI scanner automates the first question and can append what it finds. In
+the recommended desktop app, scan the folder and click **Add checked items to
+.gitignore**. From the terminal, the same thing:
 
 ```bash
 python tools/phi_scan.py "C:\path\to\project" --update-gitignore
