@@ -1,0 +1,99 @@
+# .gitignore — medical-physics project (C# / Python)
+# Copy into your project root as ".gitignore". Delete sections you don't need,
+# add what's unique to your project. See docs/mindful-gitignore.md for the why.
+
+# =====================================================================
+# 1. PATIENT DATA & CLINICAL FILES — never committed, no exceptions
+# =====================================================================
+# DICOM
+*.dcm
+*.DCM
+*.dicom
+*.ima
+*.IMA
+# Volumes / segmentations
+*.nii
+*.nii.gz
+*.mha
+*.mhd
+*.nrrd
+*.raw
+*.img
+*.hdr
+# Plan/dose exports, ARIA pulls, chart data
+*.dvh
+# Quarantine folders: ALL data lives here, nothing inside ever escapes
+data/
+Data/
+exports/
+patient_data/
+PHI/
+
+# Spreadsheets and documents often carry MRNs — ignored by default.
+# If a specific one is safe (no PHI, verified), re-include it explicitly, e.g.:
+#   !docs/dose_constraints_reference.xlsx
+*.xls
+*.xlsx
+*.csv
+*.accdb
+*.mdb
+
+# =====================================================================
+# 2. SECRETS & CREDENTIALS
+# =====================================================================
+.env
+*.env
+.env.*
+secrets.json
+connectionstrings.json
+appsettings.Production.json
+appsettings.Local.json
+*.pfx
+*.p12
+*.key
+*.pem
+CLAUDE.local.md
+
+# =====================================================================
+# 3. BUILD OUTPUTS & ENVIRONMENTS
+# =====================================================================
+# C# / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+packages/
+TestResults/
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# =====================================================================
+# 4. BIG BINARY ARTIFACTS (model weights, archives)
+# =====================================================================
+*.pth
+*.pt
+*.onnx
+*.h5
+*.ckpt
+*.zip
+*.7z
+*.tar.gz
+
+# =====================================================================
+# 5. OS / EDITOR NOISE
+# =====================================================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*.bak
+*.tmp
+~$*

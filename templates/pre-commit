@@ -1,0 +1,35 @@
+#!/bin/sh
+# Git pre-commit hook: block the commit if phi_scan.py finds PHI indicators.
+#
+# Install (from your project root, after copying tools/phi_scan.py into the repo):
+#   copy this file to .git\hooks\pre-commit   (no extension)
+# Git for Windows runs sh hooks natively; nothing else to install.
+#
+# To bypass in a genuine emergency (and only then): git commit --no-verify
+
+SCANNER="tools/phi_scan.py"
+if [ ! -f "$SCANNER" ]; then
+    echo "pre-commit: $SCANNER not found; skipping PHI scan." >&2
+    echo "            Copy it from the CreatingGithubRepoInstructions repo." >&2
+    exit 0
+fi
+
+# Find a Python interpreter (Windows py launcher first, then PATH)
+if command -v py >/dev/null 2>&1; then PY="py -3";
+elif command -v python3 >/dev/null 2>&1; then PY="python3";
+elif command -v python >/dev/null 2>&1; then PY="python";
+else
+    echo "pre-commit: no Python found; cannot run PHI scan. Commit blocked." >&2
+    exit 1
+fi
+
+$PY "$SCANNER" .
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+    echo "" >&2
+    echo "COMMIT BLOCKED: phi_scan found PHI indicators (see above)." >&2
+    echo "Move the data out of the repo or update .gitignore, then commit again." >&2
+    exit 1
+fi
+exit 0

@@ -1,0 +1,26 @@
+# PHI tripwire — copy into your repo as .github/workflows/phi-scan.yml
+# (also copy tools/phi_scan.py into the repo).
+#
+# IMPORTANT: this runs AFTER a push reaches GitHub. It cannot prevent a leak —
+# it detects one. The real gate is running phi_scan.py locally before the first
+# commit, plus the pre-commit hook. Treat a failure of this workflow as an
+# incident to report, not just a build to fix.
+
+name: PHI scan
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  phi-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Scan repository for PHI indicators
+        run: python tools/phi_scan.py .
