@@ -61,6 +61,11 @@ write the .gitignore. Distributed as a single .exe on the department share.
 **Verdict: viable, and the right *future* shape if we decide non-programmers need
 a double-click GUI. Not the first build.**
 
+> **Update:** built — see [csharp/](../csharp/README.md). A WPF app (.NET
+> Framework 4.8, zero-install on Windows 10/11) that runs the identical rules
+> and shares the Python tool's .gitignore managed block. The Python script
+> remains the reference implementation; rules change in both files together.
+
 ## Option 3 — A prompt for Claude
 
 A standing prompt each person gives Claude Code: "review this folder for PHI
@@ -95,7 +100,8 @@ metadata first, content only where permitted).
 |---|---|---|
 | 1. **Local scanner** ([tools/phi_scan.py](../tools/phi_scan.py)) | Before the first commit, on demand | Deterministic, stdlib-only Python; scans, reports, writes .gitignore. **The primary gate.** |
 | 2. **Pre-commit hook** ([templates/pre-commit](../templates/pre-commit)) | Every `git commit`, automatically | Runs layer 1; blocks the commit on findings. Enforcement without memory. |
-| 3. **GitHub Action** ([templates/phi-scan-workflow.yml](../templates/phi-scan-workflow.yml)) | Every push, on GitHub | Same scanner as tripwire — catches drift and hook-skippers. |
+| 3. **GitHub Action** ([templates/phi-scan-workflow.yml](../templates/phi-scan-workflow.yml)) | Every push / PR, on GitHub | Same scanner as tripwire — catches drift and hook-skippers. With [PR + branch protection](pr-workflow.md), it becomes a real gate on `main`. |
+| 3b. **Desktop GUI** ([csharp/](../csharp/README.md)) | Before the first commit, on demand | Same rules as layer 1 for colleagues who don't use Python or a terminal. |
 | 4. **Claude review** ([prompts/phi-review-prompt.md](../prompts/phi-review-prompt.md)) | On demand, for judgment calls | Human+LLM review of what layers 1–3 flag but can't decide. |
 
 Why Python for the core rather than C# (given the team knows both):

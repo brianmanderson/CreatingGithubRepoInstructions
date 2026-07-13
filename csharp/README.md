@@ -1,0 +1,51 @@
+# PHI Scan — desktop GUI
+
+A point-and-click version of [tools/phi_scan.py](../tools/phi_scan.py) for
+colleagues who don't use Python or a terminal. Same detection rules, same
+.gitignore behavior — the two are kept in lockstep deliberately (see the note at
+the top of [Scanner/PhiScanner.cs](PhiScanGui/Scanner/PhiScanner.cs)).
+
+The workflow: Browse to a folder → **Scan** → findings appear color-coded
+(HIGH red / MEDIUM yellow / REVIEW blue) → HIGH rows come pre-checked →
+**Add checked items to .gitignore** (with a confirmation preview) or
+**Open in Explorer** to move the file out — which is always the better fix.
+
+## For users: getting it
+
+Grab `PhiScanGui.exe` from the department share (or from this repo's Releases
+page once one is published). No installation — it targets .NET Framework 4.8,
+which is already on every Windows 10/11 machine. Double-click and go.
+
+Run it **before** you turn a folder into a git repository. If it finds things,
+prefer moving them out of the folder over ignoring them; the .gitignore button
+is the backstop, and it reminds you that ignoring does not untrack or un-push
+anything.
+
+## For maintainers: building it
+
+```powershell
+dotnet build csharp/PhiScanGui/PhiScanGui.csproj -c Release
+# output: csharp/PhiScanGui/bin/Release/net48/PhiScanGui.exe (~35 KB)
+```
+
+Any .NET SDK ≥ 6 on Windows can build it; there are no NuGet dependencies.
+Ship `PhiScanGui.exe` (the `.config` beside it is optional boilerplate).
+
+## Changing detection rules
+
+The rules live in two places that MUST stay identical:
+
+- [PhiScanGui/Scanner/PhiScanner.cs](PhiScanGui/Scanner/PhiScanner.cs) (this app)
+- [tools/phi_scan.py](../tools/phi_scan.py) (CLI, pre-commit hook, GitHub Action)
+
+If you add an extension or a regex to one, add it to the other in the same
+commit. The Python file is the reference implementation; the GitHub Action and
+pre-commit hook run it, so a rule that exists only in the GUI protects nobody
+in CI.
+
+Architecture, for whoever inherits this: WPF, MVVM-lite
+([ViewModels/MainViewModel.cs](PhiScanGui/ViewModels/MainViewModel.cs) holds all
+logic; the window has no code-behind beyond `InitializeComponent`). Scanning
+runs on a background task with cancellation; the engine
+([Scanner/](PhiScanGui/Scanner)) has no WPF dependencies, so it can be reused
+from a console tool or ESAPI script as-is.

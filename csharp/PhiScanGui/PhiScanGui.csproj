@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- net48 is preinstalled on Windows 10/11: the published exe needs no runtime install -->
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>PHI Scan</AssemblyTitle>
+    <Product>PHI Scan</Product>
+    <Description>Scan a folder for likely PHI before it goes into a git repository.</Description>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+</Project>

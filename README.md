@@ -24,8 +24,10 @@ problems *before* the first commit, when fixing them costs nothing.
 |---|---|
 | [docs/creating-a-repo.md](docs/creating-a-repo.md) | Step-by-step: existing folder → GitHub repo (GitHub Desktop and command-line paths) |
 | [docs/mindful-gitignore.md](docs/mindful-gitignore.md) | How to think about a .gitignore, not just copy one |
+| [docs/pr-workflow.md](docs/pr-workflow.md) | Giving the scan teeth: branch → PR → merge, with `main` protected by the phi-scan check |
 | [docs/phi-scanner-options.md](docs/phi-scanner-options.md) | Analysis: GitHub Action vs. C# tool vs. Claude prompt — and what we built |
 | [tools/phi_scan.py](tools/phi_scan.py) | The PHI scanner. Run it on any folder **before** `git init`. Can auto-update your .gitignore. |
+| [csharp/](csharp/README.md) | **PHI Scan desktop app** — the same scanner as a point-and-click WPF tool (no Python or terminal needed) |
 | [templates/medical-project.gitignore](templates/medical-project.gitignore) | Ready-to-copy .gitignore for our typical projects |
 | [templates/pre-commit](templates/pre-commit) | Git hook that runs the scanner on every commit |
 | [templates/phi-scan-workflow.yml](templates/phi-scan-workflow.yml) | GitHub Action tripwire (copy into `.github/workflows/`) |

@@ -45,6 +45,10 @@ From this repo, run the scanner against your project folder:
 python tools/phi_scan.py "C:\Users\you\Projects\MyEsapiScript"
 ```
 
+*Not a Python/terminal person?* Use the desktop app instead — grab
+`PhiScanGui.exe` from the share (or build it; see [csharp/](../csharp/README.md)),
+browse to your folder, and click **Scan**. Same rules, same results.
+
 It reports three tiers:
 
 - **HIGH** — files that are almost certainly PHI carriers (DICOM files, files whose
@@ -141,6 +145,9 @@ team guide in the UCSD_ProgrammingLead repo).
   smoke alarm, not a lock — by the time it fires, the data has already reached
   GitHub — but it catches drift and protects you from collaborators who skipped
   the local steps.
+- **Protected main + pull requests** — the strongest setup: nothing merges to
+  `main` unless the phi-scan check passes. One-time setup and the daily
+  branch → PR → merge routine are in [pr-workflow.md](pr-workflow.md).
 
 ---
 
