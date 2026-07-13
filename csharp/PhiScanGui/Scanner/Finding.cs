@@ -16,6 +16,13 @@ namespace PhiScanGui.Scanner
         /// <summary>True when the finding is a directory (gitignore entry needs a trailing slash).</summary>
         public bool IsDirectory { get; }
 
+        /// <summary>
+        /// True when the root .gitignore already covers this path, so git will not
+        /// pick it up. Caveat: covers UNTRACKED files only — a file git already
+        /// tracks stays tracked regardless of .gitignore.
+        /// </summary>
+        public bool IsCoveredByGitignore { get; set; }
+
         public Finding(Severity severity, string relativePath, string reason, bool isDirectory = false)
         {
             Severity = severity;

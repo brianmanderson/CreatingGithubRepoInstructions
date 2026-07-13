@@ -145,6 +145,12 @@ git ls-files                # the complete list of what git currently tracks
 The last one is the ground truth. If a data file appears in `git ls-files`, the
 .gitignore isn't protecting it — it's already tracked.
 
+The PHI scanners check this for you too: both the Python script and the desktop
+app read your .gitignore and mark findings that are already covered ("✓ ignored"
+in the app, `[already in .gitignore]` in the script). Covered findings don't
+fail the scan — which also means the pre-commit hook won't block commits over
+data that's properly quarantined in an ignored folder.
+
 ## Starter template
 
 [templates/medical-project.gitignore](../templates/medical-project.gitignore)

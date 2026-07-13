@@ -41,6 +41,7 @@
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn Header="Ignore?" Binding="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" Width="60" />
                 <DataGridTextColumn Header="Severity" Binding="{Binding SeverityText}" IsReadOnly="True" Width="80" />
+                <DataGridTextColumn Header="In .gitignore?" Binding="{Binding CoveredText}" IsReadOnly="True" Width="90" />
                 <DataGridTextColumn Header="File / folder" Binding="{Binding RelativePath}" IsReadOnly="True" Width="300" />
                 <DataGridTextColumn Header="Why it was flagged" Binding="{Binding Reason}" IsReadOnly="True" Width="*" />
             </DataGrid.Columns>
@@ -55,6 +56,11 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding SeverityText}" Value="REVIEW">
                             <Setter Property="Background" Value="#E2EEFF" />
+                        </DataTrigger>
+                        <!-- Covered rows muted: handled, but still visible on purpose -->
+                        <DataTrigger Binding="{Binding IsCovered}" Value="True">
+                            <Setter Property="Background" Value="#F3F3F3" />
+                            <Setter Property="Foreground" Value="#888" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

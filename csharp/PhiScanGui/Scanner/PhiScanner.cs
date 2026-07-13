@@ -71,6 +71,12 @@ namespace PhiScanGui.Scanner
             var findings = new List<Finding>();
             var rootFull = Path.GetFullPath(root);
             WalkDirectory(rootFull, rootFull, findings, progress, token);
+
+            var gitignore = GitignoreMatcher.Load(rootFull);
+            if (gitignore.HasRules)
+                foreach (var f in findings)
+                    f.IsCoveredByGitignore = gitignore.IsIgnored(f.RelativePath, f.IsDirectory);
+
             return findings
                 .OrderBy(f => f.Severity)
                 .ThenBy(f => f.RelativePath, StringComparer.OrdinalIgnoreCase)

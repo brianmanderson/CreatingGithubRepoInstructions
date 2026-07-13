@@ -10,6 +10,12 @@ The workflow: Browse to a folder → **Scan** → findings appear color-coded
 **Add checked items to .gitignore** (with a confirmation preview) or
 **Open in Explorer** to move the file out — which is always the better fix.
 
+Findings already covered by the folder's .gitignore (e.g. a DICOM file inside a
+`Data/` folder you've already ignored) show a **✓ ignored** mark, appear grayed
+out, and aren't pre-checked — git can't pick them up, so no action is needed.
+Two caveats the app also states: .gitignore does not untrack files git already
+tracks, and an ignored folder is still not a safe long-term home for PHI.
+
 ## For users: getting it
 
 Download `PhiScanGui.exe` from the repo's

@@ -10,7 +10,9 @@ Stdlib only; Python 3.8+; Windows/macOS/Linux.
     python phi_scan.py <folder> --json               machine-readable output
 
 Exit codes: 0 = clean, 1 = findings, 2 = usage/IO error. That makes it usable as a
-pre-commit hook or CI step (see templates/).
+pre-commit hook or CI step (see templates/). Findings already covered by the root
+.gitignore are reported informationally but do not fail the scan — git cannot pick
+them up (unless it already tracks them, which .gitignore does not undo).
 
 What it detects
   HIGH   - DICOM files, by extension AND by magic bytes ('DICM' at offset 128), so
@@ -81,12 +83,109 @@ MRN_SHAPED_NAME = re.compile(r"^\d{6,9}$")  # bare 6-9 digit file/folder name
 
 
 class Finding:
-    __slots__ = ("severity", "path", "reason")
+    __slots__ = ("severity", "path", "reason", "is_dir", "covered")
 
-    def __init__(self, severity, path, reason):
+    def __init__(self, severity, path, reason, is_dir=False):
         self.severity = severity   # HIGH | MEDIUM | REVIEW
         self.path = path           # Path, relative to scan root
         self.reason = reason
+        self.is_dir = is_dir
+        self.covered = False       # already matched by the root .gitignore
+
+
+class GitignoreMatcher:
+    """Evaluates the scan root's .gitignore (root file only — nested .gitignore
+    files and global excludes are not consulted). Implements core semantics:
+    last match wins, '!' negation, trailing-slash dir-only patterns,
+    leading/middle-slash anchoring, '*', '?', '[...]', '**', and 'an ignored
+    parent directory covers everything beneath it'. Kept in lockstep with the
+    C# port in csharp/PhiScanGui/Scanner/GitignoreMatcher.cs."""
+
+    def __init__(self):
+        self.rules = []  # (regex, negation, dir_only)
+
+    @classmethod
+    def load(cls, root):
+        m = cls()
+        gi = Path(root) / ".gitignore"
+        if gi.exists():
+            # utf-8-sig: Notepad/PowerShell write a BOM, which would otherwise
+            # glue itself onto the first pattern and silently disable it
+            for line in gi.read_text(encoding="utf-8-sig", errors="replace").splitlines():
+                m.add_pattern(line)
+        return m
+
+    def add_pattern(self, line):
+        pat = line.rstrip()
+        if not pat or pat.startswith("#"):
+            return
+        negation = pat.startswith("!")
+        if negation:
+            pat = pat[1:]
+        if pat.startswith(("\\#", "\\!")):
+            pat = pat[1:]
+        dir_only = pat.endswith("/")
+        pat = pat.rstrip("/")
+        if not pat:
+            return
+        anchored = pat.startswith("/") or "/" in pat
+        pat = pat.lstrip("/")
+        body = self._glob_to_regex(pat)
+        prefix = "^" if anchored else "^(?:.*/)?"
+        self.rules.append((re.compile(prefix + body + "$"), negation, dir_only))
+
+    def is_ignored(self, rel_path, is_dir):
+        path = str(rel_path).replace("\\", "/").strip("/")
+        if not path:
+            return False
+        parts = path.split("/")
+        # An ignored ancestor directory covers the whole subtree (negations
+        # inside cannot re-include) — matches git behavior.
+        for i in range(1, len(parts)):
+            if self._decide("/".join(parts[:i]), is_dir=True):
+                return True
+        return self._decide(path, is_dir)
+
+    def _decide(self, path, is_dir):
+        ignored = False
+        for regex, negation, dir_only in self.rules:
+            if dir_only and not is_dir:
+                continue
+            if regex.match(path):
+                ignored = not negation
+        return ignored
+
+    @staticmethod
+    def _glob_to_regex(pat):
+        out = []
+        i, n = 0, len(pat)
+        while i < n:
+            c = pat[i]
+            if c == "/" and i + 2 == n - 1 and pat[i + 1:i + 3] == "**":
+                # trailing '/**': everything inside the dir AND the dir itself
+                # (git check-ignore treats 'temp/**' as matching 'temp/')
+                out.append("(?:/.*)?")
+                i += 3
+                continue
+            if c == "*":
+                double = i + 1 < n and pat[i + 1] == "*"
+                boundary = i == 0 or pat[i - 1] == "/"
+                if double and boundary and i + 2 < n and pat[i + 2] == "/":
+                    out.append("(?:.*/)?"); i += 3; continue   # '**/'
+                if double and boundary and i + 2 >= n:
+                    out.append(".*"); i += 2; continue          # trailing '**'
+                out.append("[^/]*"); i += 2 if double else 1; continue
+            if c == "?":
+                out.append("[^/]"); i += 1; continue
+            if c == "[":
+                close = pat.find("]", i + 1)
+                if close > i:
+                    cls = pat[i + 1:close]
+                    if cls.startswith("!"):
+                        cls = "^" + cls[1:]
+                    out.append("[" + cls + "]"); i = close + 1; continue
+            out.append(re.escape(c)); i += 1
+        return "".join(out)
 
 
 def is_dicom_by_magic(fp):
@@ -146,7 +245,8 @@ def scan_tree(root):
             if MRN_SHAPED_NAME.match(d):
                 findings.append(Finding(
                     "MEDIUM", rel_dir / d,
-                    "folder name is a bare 6-9 digit number (MRN-shaped)"))
+                    "folder name is a bare 6-9 digit number (MRN-shaped)",
+                    is_dir=True))
 
         for name in filenames:
             fp = Path(dirpath) / name
@@ -203,11 +303,11 @@ MANAGED_HEADER = "# --- added by phi_scan.py (review, then keep or prune) ---"
 
 
 def gitignore_entries(findings):
-    """Repo-relative gitignore patterns for HIGH findings (dirs collapse files)."""
+    """Repo-relative gitignore patterns for uncovered HIGH findings (dirs collapse files)."""
     entries = []
     seen_dirs = set()
     for f in findings:
-        if f.severity != "HIGH":
+        if f.severity != "HIGH" or f.covered:
             continue
         parent = f.path.parent
         if parent != Path("."):
@@ -264,9 +364,15 @@ def print_report(findings, root):
         }[sev]
         print(f"[{label}]")
         for f in group:
-            print(f"  {f.path}  <- {f.reason}")
+            mark = "  [already in .gitignore]" if f.covered else ""
+            print(f"  {f.path}  <- {f.reason}{mark}")
         print()
-    print(f"Totals: HIGH={counts['HIGH']}  MEDIUM={counts['MEDIUM']}  REVIEW={counts['REVIEW']}")
+    covered = sum(1 for f in findings if f.covered)
+    print(f"Totals: HIGH={counts['HIGH']}  MEDIUM={counts['MEDIUM']}  REVIEW={counts['REVIEW']}"
+          + (f"  (already covered by .gitignore: {covered})" if covered else ""))
+    if covered:
+        print("Covered files are safe from 'git add' — but NOT if git already tracks them,")
+        print("and .gitignore does not make the folder a safe place to keep PHI.")
     print("Best fix is moving data out of the repo folder; --update-gitignore is the backstop.")
 
 
@@ -285,6 +391,11 @@ def main(argv=None):
 
     findings = scan_tree(root)
 
+    matcher = GitignoreMatcher.load(root)
+    if matcher.rules:
+        for f in findings:
+            f.covered = matcher.is_ignored(f.path, f.is_dir)
+
     added = []
     if args.update_gitignore:
         added = update_gitignore(root, gitignore_entries(findings))
@@ -293,7 +404,8 @@ def main(argv=None):
         print(json.dumps({
             "root": str(root),
             "findings": [
-                {"severity": f.severity, "path": f.path.as_posix(), "reason": f.reason}
+                {"severity": f.severity, "path": f.path.as_posix(), "reason": f.reason,
+                 "covered_by_gitignore": f.covered}
                 for f in findings
             ],
             "gitignore_added": added,
@@ -309,7 +421,9 @@ def main(argv=None):
             else:
                 print("\n.gitignore: nothing to add (no HIGH findings, or already covered).")
 
-    return 1 if findings else 0
+    # Findings already covered by .gitignore don't fail the scan: git can't pick
+    # them up, so the pre-commit hook and CI shouldn't block on them.
+    return 1 if any(not f.covered for f in findings) else 0
 
 
 if __name__ == "__main__":

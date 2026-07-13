@@ -90,9 +90,12 @@ namespace PhiScanGui.ViewModels
                 int high = results.Count(f => f.Severity == Severity.High);
                 int med = results.Count(f => f.Severity == Severity.Medium);
                 int rev = results.Count(f => f.Severity == Severity.Review);
+                int covered = results.Count(f => f.IsCoveredByGitignore);
+                var coveredNote = covered == 0 ? "" :
+                    $" {covered} already covered by .gitignore (safe from 'git add' — but NOT if git already tracks them).";
                 Status = results.Count == 0
                     ? "No PHI indicators found. Reminder: a clean scan narrows the search, it does not prove absence."
-                    : $"{results.Count} finding(s): HIGH={high}, MEDIUM={med}, REVIEW={rev}. " +
+                    : $"{results.Count} finding(s): HIGH={high}, MEDIUM={med}, REVIEW={rev}.{coveredNote} " +
                       "Best fix is moving data OUT of the folder; .gitignore is the backstop.";
             }
             catch (OperationCanceledException)
