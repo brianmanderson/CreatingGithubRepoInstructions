@@ -49,6 +49,31 @@ python phi_scan.py "C:\path\to\my\project" --update-gitignore
 
 Full walkthrough in [docs/creating-a-repo.md](docs/creating-a-repo.md).
 
+## Not a Python or terminal person? Use the desktop app
+
+You can follow this entire process without opening a terminal:
+
+1. **Scan with the desktop app instead of the Python script.** Download
+   `PhiScanGui.exe` from the
+   [Releases page](https://github.com/brianmanderson/CreatingGithubRepoInstructions/releases)
+   — no installation, just double-click it. (Windows SmartScreen may warn the
+   first time because the exe is unsigned; choose "More info → Run anyway".)
+2. Click **Browse…**, pick your project folder, click **Scan**.
+3. Work the findings top-down: **red (HIGH)** rows are almost certainly patient
+   data — use **Open in Explorer** and move those files out of the folder
+   entirely. **Yellow (MEDIUM)** rows need your judgment; **blue (REVIEW)** rows
+   are files the scanner can't read (Excel, PDFs) — open them yourself.
+4. For anything that must stay in the folder but should never be committed,
+   leave its box checked and click **Add checked items to .gitignore**. The app
+   shows you exactly what it will write before it writes it.
+5. Then publish the folder with **GitHub Desktop** (no command line) — the
+   step-by-step "Path A" instructions in
+   [docs/creating-a-repo.md](docs/creating-a-repo.md) pick up from here:
+   add the folder, review the file list, commit, and publish **private**.
+
+The app runs the exact same detection rules as the Python script, so either
+route gives the same protection. More detail in [csharp/README.md](csharp/README.md).
+
 ## The non-negotiables
 
 1. **Private by default.** Public requires a deliberate decision and a second set of eyes.
