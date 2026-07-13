@@ -10,7 +10,7 @@
     <AssemblyTitle>PHI Scan</AssemblyTitle>
     <Product>PHI Scan</Product>
     <Description>Scan a folder for likely PHI before it goes into a git repository.</Description>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 
 </Project>
