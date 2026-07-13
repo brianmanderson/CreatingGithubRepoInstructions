@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
 using PhiScanGui.Scanner;
 
 namespace PhiScanGui.ViewModels
@@ -63,14 +64,17 @@ namespace PhiScanGui.ViewModels
 
         private void Browse()
         {
-            using (var dlg = new System.Windows.Forms.FolderBrowserDialog())
-            {
-                dlg.Description = "Pick the project folder to scan for PHI";
-                if (Directory.Exists(FolderPath))
-                    dlg.SelectedPath = FolderPath;
-                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    FolderPath = dlg.SelectedPath;
-            }
+            // Modern Explorer-chrome folder picker (address bar, quick access, resizable),
+            // with a graceful fallback to the classic dialog if the COM picker is
+            // unavailable. Owned by the main window so it stays modal to the app.
+            IntPtr owner = Application.Current?.MainWindow != null
+                ? new WindowInteropHelper(Application.Current.MainWindow).Handle
+                : IntPtr.Zero;
+
+            string picked = ModernFolderPicker.PickFolderWithFallback(
+                "Pick the project folder to scan for PHI", FolderPath, owner);
+            if (!string.IsNullOrEmpty(picked))
+                FolderPath = picked;
         }
 
         private async Task ScanAsync()
