@@ -137,6 +137,13 @@ gh repo edit yourname/MyEsapiScript --add-topic ucsd-catalog
 (and add Brian as a read collaborator if it's under your personal account — see the
 team guide in the UCSD_ProgrammingLead repo).
 
+While you're at it, end your README with a short `## Reuse notes` section —
+three bullets: **What worked** (the approach that got it over the line),
+**Start here** (the file/class/query someone should lift first), **What I'd do
+differently** (dead ends the next person should skip). The catalog tells people
+your project exists; this section tells them how to build on it. Full template
+in the team guide.
+
 ## Step 6 — Install the safety nets (recommended)
 
 - **Pre-commit hook** — the scanner runs automatically on every commit and blocks
